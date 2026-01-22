@@ -33,8 +33,7 @@ function App() {
   // Handle file selection
   const handleFileSelect = useCallback((selectedFiles) => {
     const imageFiles = Array.from(selectedFiles).filter(file => 
-      file.type === 'image/jpeg' || file.type === 'image/png' || 
-      file.type === 'image/jpg'
+      file.type === 'image/jpeg' || file.type === 'image/png'
     );
     
     if (imageFiles.length === 0) {
@@ -106,27 +105,27 @@ function App() {
     const errors = [];
 
     try {
-      // Compression options
-      const options = {
-        maxSizeMB: maxSizeMB,
-        maxWidthOrHeight: 4096,
-        useWebWorker: true,
-        initialQuality: compressionQuality,
-        fileType: 'image/jpeg'
-      };
-
       // Process each file
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
         try {
-          // Update progress
+          // Update progress - showing current file being processed
           setProgress({
-            current: i + 1,
+            current: i,
             total: files.length,
             currentFile: file.name,
-            percentage: Math.round(((i + 1) / files.length) * 100)
+            percentage: Math.round((i / files.length) * 100)
           });
+
+          // Compression options - preserve file type for PNGs to maintain transparency
+          const options = {
+            maxSizeMB: maxSizeMB,
+            maxWidthOrHeight: 4096,
+            useWebWorker: true,
+            initialQuality: compressionQuality,
+            fileType: file.type === 'image/png' ? 'image/png' : 'image/jpeg'
+          };
 
           // Compress the image
           const compressedFile = await imageCompression(file, options);
@@ -134,6 +133,14 @@ function App() {
           // Add to ZIP with original filename
           zip.file(file.name, compressedFile);
           successCount++;
+          
+          // Update progress after successful compression
+          setProgress({
+            current: i + 1,
+            total: files.length,
+            currentFile: file.name,
+            percentage: Math.round(((i + 1) / files.length) * 100)
+          });
 
         } catch (error) {
           console.error(`Error compressing ${file.name}:`, error);
